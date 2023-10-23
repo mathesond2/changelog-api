@@ -1,6 +1,7 @@
 import prisma from '../db';
+import { asyncErrorHandler } from '../modules/errors';
 
-export const getOneUpdate = async (req, res) => {
+export const getOneUpdate = asyncErrorHandler(async (req, res) => {
   const update = await prisma.update.findFirst({
     where: {
       id: req.params.id,
@@ -8,9 +9,9 @@ export const getOneUpdate = async (req, res) => {
   });
 
   res.json({ data: update });
-};
+});
 
-export const getUpdates = async (req, res) => {
+export const getUpdates = asyncErrorHandler(async (req, res) => {
   const products = await prisma.product.findMany({
     where: {
       belongsToId: req.user.id,
@@ -25,9 +26,9 @@ export const getUpdates = async (req, res) => {
   }, []);
 
   res.json({ data: updates }); //use this shape consistently for all responses
-};
+});
 
-export const createUpdate = async (req, res) => {
+export const createUpdate = asyncErrorHandler(async (req, res, next) => {
   const product = await prisma.product.findUnique({
     where: {
       id: req.body.productId,
@@ -35,7 +36,8 @@ export const createUpdate = async (req, res) => {
   });
 
   if (!product) {
-    return res.json({ message: 'Nope' });
+    next({ message: 'product not found' });
+    return;
   }
 
   const update = await prisma.update.create({
@@ -43,9 +45,9 @@ export const createUpdate = async (req, res) => {
   });
 
   res.json({ data: update });
-};
+});
 
-export const updateUpdate = async (req, res) => {
+export const updateUpdate = asyncErrorHandler(async (req, res, next) => {
   const products = await prisma.product.findMany({
     where: {
       belongsToId: req.user.id,
@@ -62,7 +64,8 @@ export const updateUpdate = async (req, res) => {
   const match = updates.find((update) => update.id === req.params.id);
 
   if (!match) {
-    return res.json({ message: 'Nope' });
+    next({ message: `no update found for ${req.params.id}` });
+    return;
   }
 
   const updated = await prisma.update.update({
@@ -73,9 +76,9 @@ export const updateUpdate = async (req, res) => {
   });
 
   res.json({ data: updated });
-};
+});
 
-export const deleteUpdate = async (req, res) => {
+export const deleteUpdate = asyncErrorHandler(async (req, res, next) => {
   const products = await prisma.product.findMany({
     where: {
       belongsToId: req.user.id,
@@ -92,7 +95,8 @@ export const deleteUpdate = async (req, res) => {
   const match = updates.find((update) => update.id === req.params.id);
 
   if (!match) {
-    return res.json({ message: 'Nope' });
+    next({ message: `no update found for ${req.params.id}` });
+    return;
   }
 
   const deleted = await prisma.update.delete({
@@ -102,4 +106,4 @@ export const deleteUpdate = async (req, res) => {
   });
 
   res.json({ data: deleted });
-};
+});

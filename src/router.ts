@@ -10,7 +10,7 @@ const router = Router();
 //think: separate routes for auth'ed stuff and non-auth'ed stuff
 
 //Product routes
-router.get('/product', getProducts); //need to handle scenario where user has no existing products
+router.get('/product', getProducts);
 router.get('/product/:id', getProduct);
 router.put('/product/:id', [param('id').isString(), body('name').isString(), handleInputErrors], updateProduct);
 router.post('/product', [body('name').isString(), handleInputErrors], createProduct);

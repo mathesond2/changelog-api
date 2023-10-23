@@ -1,5 +1,7 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../db';
 import { comparePasswords, createJWT, hashPassword } from '../modules/auth';
+import { asyncErrorHandler } from '../modules/errors';
 
 //talking to a disc is async
 export const createNewUser = async (req, res, next) => {
@@ -14,26 +16,35 @@ export const createNewUser = async (req, res, next) => {
     const token = createJWT(user);
     res.json({ token });
   } catch (e) {
-    //you'd prob want to check prisma to make sure its on the user and not the db
-    e.type = 'input';
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === 'P2002') {
+        e.message = 'username already exists';
+      }
+      e['type'] = 'input';
+    }
+    console.error(`createNewUser error: ${e.message}`);
     next(e);
   }
 };
 
-export const signIn = async (req, res) => {
+export const signIn = asyncErrorHandler(async (req, res, next) => {
+  const errObj = { message: 'Please enter a valid username and password.', type: 'auth' };
   const user = await prisma.user.findUnique({
     where: {
       username: req.body.username,
     },
   });
+  if (!user) {
+    next(errObj);
+    return;
+  }
 
   const isValid = await comparePasswords(req.body.password, user.password);
   if (!isValid) {
-    res.status(401);
-    res.json({ message: 'Nope.' });
+    next(errObj);
     return;
   }
 
   const token = createJWT(user);
   res.json({ token });
-};
+});

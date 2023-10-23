@@ -1,6 +1,7 @@
 import prisma from '../db';
+import { asyncErrorHandler } from '../modules/errors';
 
-export const getProducts = async (req, res) => {
+export const getProducts = asyncErrorHandler(async (req, res) => {
   const user = await prisma.user.findUnique({
     where: {
       id: req.user.id,
@@ -11,11 +12,10 @@ export const getProducts = async (req, res) => {
   });
 
   res.json({ data: user.products }); //use this shape consistently for all responses
-};
+});
 
-export const getProduct = async (req, res) => {
+export const getProduct = asyncErrorHandler(async (req, res) => {
   const id = req.params.id;
-
   const product = await prisma.product.findFirst({
     where: {
       id,
@@ -26,24 +26,20 @@ export const getProduct = async (req, res) => {
   });
 
   res.json({ data: product });
-};
+});
 
-export const createProduct = async (req, res, next) => {
-  try {
-    const product = await prisma.product.create({
-      data: {
-        name: req.body.name,
-        belongsToId: req.user.id,
-      },
-    });
+export const createProduct = asyncErrorHandler(async (req, res) => {
+  const product = await prisma.product.create({
+    data: {
+      name: req.body.name,
+      belongsToId: req.user.id,
+    },
+  });
 
-    res.json({ data: product });
-  } catch (e) {
-    next(e);
-  }
-};
+  res.json({ data: product });
+});
 
-export const updateProduct = async (req, res) => {
+export const updateProduct = asyncErrorHandler(async (req, res) => {
   const updated = await prisma.product.update({
     where: {
       id: req.params.id,
@@ -54,9 +50,9 @@ export const updateProduct = async (req, res) => {
   });
 
   res.json({ data: updated }); //once the client makes the request to update something, be nice and send them the updated version so they dont have to query again.
-};
+});
 
-export const deleteProduct = async (req, res) => {
+export const deleteProduct = asyncErrorHandler(async (req, res) => {
   const deleted = await prisma.product.delete({
     where: {
       id: req.params.id,
@@ -65,4 +61,4 @@ export const deleteProduct = async (req, res) => {
   });
 
   res.json({ data: deleted });
-};
+});
